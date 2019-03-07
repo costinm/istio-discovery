@@ -58,7 +58,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/natefinch/lumberjack"
+	//"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zapgrpc"
@@ -106,14 +106,14 @@ func prepZap(options *Options) (zapcore.Core, zapcore.Core, zapcore.WriteSyncer,
 	}
 
 	var rotaterSink zapcore.WriteSyncer
-	if options.RotateOutputPath != "" {
-		rotaterSink = zapcore.AddSync(&lumberjack.Logger{
-			Filename:   options.RotateOutputPath,
-			MaxSize:    options.RotationMaxSize,
-			MaxBackups: options.RotationMaxBackups,
-			MaxAge:     options.RotationMaxAge,
-		})
-	}
+	//if options.RotateOutputPath != "" {
+	//	rotaterSink = zapcore.AddSync(&lumberjack.Logger{
+	//		Filename:   options.RotateOutputPath,
+	//		MaxSize:    options.RotationMaxSize,
+	//		MaxBackups: options.RotationMaxBackups,
+	//		MaxAge:     options.RotationMaxAge,
+	//	})
+	//}
 
 	errSink, closeErrorSink, err := zap.Open(options.ErrorOutputPaths...)
 	if err != nil {

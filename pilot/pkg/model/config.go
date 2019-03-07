@@ -15,15 +15,12 @@
 package model
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-
-	"github.com/costinm/istio-discovery/pilot/pkg/model/test"
 	authn "istio.io/api/authentication/v1alpha1"
 	mccpb "istio.io/api/mixer/v1/config/client"
 	networking "istio.io/api/networking/v1alpha3"
@@ -325,20 +322,6 @@ const (
 )
 
 var (
-	// MockConfig is used purely for testing
-	MockConfig = ProtoSchema{
-		Type:        "mock-config",
-		Plural:      "mock-configs",
-		Group:       "test",
-		Version:     "v1",
-		MessageName: "test.MockConfig",
-		Validate: func(name, namespace string, config proto.Message) error {
-			if config.(*test.MockConfig).Key == "" {
-				return errors.New("empty key")
-			}
-			return nil
-		},
-	}
 
 	// VirtualService describes v1alpha3 route rules
 	VirtualService = ProtoSchema{
