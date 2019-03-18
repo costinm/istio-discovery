@@ -1,4 +1,4 @@
-package ads
+package service
 
 import (
 	"context"
@@ -25,6 +25,8 @@ import (
 	mcp "istio.io/api/mcp/v1alpha1"
 	"github.com/costinm/istio-discovery/pkg/features/pilot"
 )
+
+// Main implementation of the XDS, MCP and SDS services, using a common internal structures and model.
 
 var (
 	nacks = prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -57,6 +59,14 @@ type AdsService struct {
 	clients map[string]*Connection
 
 	connectionNumber int
+}
+
+func (s *AdsService) StreamSecrets(ads.SecretDiscoveryService_StreamSecretsServer) error {
+	return nil
+}
+
+func (s *AdsService) FetchSecrets(context.Context, *v2.DiscoveryRequest) (*v2.DiscoveryResponse, error) {
+	return nil, nil
 }
 
 type Connection struct {
@@ -102,6 +112,7 @@ func NewService(addr string) *AdsService {
 
 	ads.RegisterAggregatedDiscoveryServiceServer(adss.grpcServer, adss)
 	mcp.RegisterResourceSourceServer(adss.grpcServer, adss)
+	ads.RegisterSecretDiscoveryServiceServer(adss.grpcServer, adss)
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -182,7 +193,7 @@ func (mcps *mcpStream) Process(s *AdsService, con *Connection, msg proto.Message
 	req := msg.(*mcp.RequestResources)
 	if !con.active {
 		if req.SinkNode == nil || req.SinkNode.Id == "" {
-			log.Println("Missing node id %s", req.String())
+			log.Println("Missing node id ", req.String())
 			return errors.New("Missing node id")
 		}
 
@@ -252,7 +263,7 @@ func (mcps *adsStream) Process(s *AdsService, con *Connection, msg proto.Message
 	req := msg.(*v2.DiscoveryRequest)
 	if !con.active {
 		if req.Node == nil || req.Node.Id == "" {
-			log.Println("Missing node id %s", req.String())
+			log.Println("Missing node id ", req.String())
 			return errors.New("Missing node id")
 		}
 
