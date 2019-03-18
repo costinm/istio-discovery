@@ -25,7 +25,7 @@ var (
 	}
 )
 
-const ServiceEntriesType = "istio/networking/v1alpha3/vserviceentries"
+const ServiceEntriesType = "istio/networking/v1alpha3/serviceentries"
 
 func init() {
 	resourceHandler["ServiceEntry"] = sePush
@@ -110,7 +110,7 @@ func convertServiceEntriesToResource(hostname string, sh map[string][]*v1alpha3.
 	}
 
 	se := &v1alpha3.ServiceEntry{
-
+		Hosts: []string{hostname},
 	}
 
 	for _, serviceEntriesShard := range sh {
@@ -126,6 +126,9 @@ func convertServiceEntriesToResource(hostname string, sh map[string][]*v1alpha3.
 	res := v1alpha1.Resource{
 		Body: seAny,
 		Metadata:&v1alpha1.Metadata{
+			Annotations: map[string]string{
+				"virtual": "1",
+			},
 			Name: namespace + "/" + name, // goes to model.Config.Name and Namespace - of course different syntax
 		},
 	}

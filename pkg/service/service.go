@@ -192,13 +192,16 @@ func (mcps *mcpStream) Context() context.Context {
 func (mcps *mcpStream) Process(s *AdsService, con *Connection, msg proto.Message) error {
 	req := msg.(*mcp.RequestResources)
 	if !con.active {
+		var id string
 		if req.SinkNode == nil || req.SinkNode.Id == "" {
 			log.Println("Missing node id ", req.String())
-			return errors.New("Missing node id")
+			id = con.PeerAddr
+		} else {
+			id = req.SinkNode.Id
 		}
 
 		con.mu.Lock()
-		con.NodeID = req.SinkNode.Id
+		con.NodeID = id
 		con.Metadata = req.SinkNode.Annotations
 		con.ConID = s.connectionID(con.NodeID)
 		con.mu.Unlock()
@@ -400,20 +403,22 @@ func (s *AdsService) push(con *Connection, rtype string, res []string) error {
 	if !f {
 		// TODO: push some 'not found'
 		log.Println("Resource not found ", rtype)
+		r := &v1alpha1.Resources{}
+		r.Collection = rtype
+		s.Send(con, rtype, r)
 		return nil
 
 	}
 	return h(s, con, rtype, res)
 }
 
+
 // IncrementalAggregatedResources is not implemented.
-func (s *AdsService) IncrementalAggregatedResources(stream ads.AggregatedDiscoveryService_IncrementalAggregatedResourcesServer) error {
+func (s *AdsService) DeltaAggregatedResources(stream ads.AggregatedDiscoveryService_DeltaAggregatedResourcesServer) error {
 	return status.Errorf(codes.Unimplemented, "not implemented")
 }
 
-
 // Callbacks from the lower layer
-
 
 func (s *AdsService) initGrpcServer() {
 	grpcOptions := s.grpcServerOptions()
