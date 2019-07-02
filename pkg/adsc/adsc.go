@@ -552,7 +552,7 @@ func (a *ADSC) handleCDS(ll []*xdsapi.Cluster) {
 	cds := map[string]*xdsapi.Cluster{}
 	for _, c := range ll {
 		cdsSize += c.Size()
-		if c.Type != xdsapi.Cluster_EDS {
+		if !c.ClusterDiscoveryType.Equal(xdsapi.Cluster_EDS) {
 			cds[c.Name] = c
 			continue
 		}
