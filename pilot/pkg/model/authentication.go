@@ -23,8 +23,6 @@ import (
 	"github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	"github.com/envoyproxy/go-control-plane/envoy/config/grpc_credential/v2alpha"
 	"github.com/gogo/protobuf/types"
-
-	authn "istio.io/api/authentication/v1alpha1"
 )
 
 const (
@@ -56,23 +54,6 @@ const (
 	// IngressGatewaySdsCaSuffix is the suffix of the sds resource name for root CA.
 	IngressGatewaySdsCaSuffix = "-cacert"
 )
-
-// JwtKeyResolver resolves JWT public key and JwksURI.
-var JwtKeyResolver = newJwksResolver(JwtPubKeyExpireDuration, JwtPubKeyEvictionDuration, JwtPubKeyRefreshInterval)
-
-// GetConsolidateAuthenticationPolicy returns the authentication policy for
-// service specified by hostname and port, if defined. It also tries to resolve JWKS URI if necessary.
-func GetConsolidateAuthenticationPolicy(store IstioConfigStore, service *Service, port *Port) *authn.Policy {
-	config := store.AuthenticationPolicyByDestination(service, port)
-	if config != nil {
-		policy := config.Spec.(*authn.Policy)
-		if err := JwtKeyResolver.SetAuthenticationPolicyJwksURIs(policy); err == nil {
-			return policy
-		}
-	}
-
-	return nil
-}
 
 // ConstructSdsSecretConfig constructs SDS secret configuration for ingress gateway.
 func ConstructSdsSecretConfigForGatewayListener(name, sdsUdsPath string) *auth.SdsSecretConfig {
