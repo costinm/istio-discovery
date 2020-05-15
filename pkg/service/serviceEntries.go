@@ -13,9 +13,8 @@ import (
 // Representation of the endpoints - used to serve EDS and ServiceEntries over MCP and XDS.
 //
 
-
 type Endpoints struct {
-	mutex sync.RWMutex
+	mutex    sync.RWMutex
 	seShards map[string]map[string][]*v1alpha3.ServiceEntry
 }
 
@@ -32,7 +31,6 @@ func init() {
 	resourceHandler[ServiceEntriesType] = sePush
 	resourceHandler["type.googleapis.com/envoy.api.v2.ClusterLoadAssignment"] = edsPush
 }
-
 
 // Called to request push of endpoints in ServiceEntry format
 func sePush(s *AdsService, con *Connection, rtype string, res []string) error {
@@ -57,7 +55,6 @@ func edsPush(s *AdsService, con *Connection, rtype string, res []string) error {
 	// TODO.
 	return nil
 }
-
 
 // Called when a new endpoint is added to a shard.
 func (fx *AdsService) ServiceEntriesUpdate(shard, hostname string, entry []*v1alpha3.ServiceEntry) error {
@@ -97,7 +94,7 @@ func (fx *AdsService) ServiceEntriesUpdate(shard, hostname string, entry []*v1al
 }
 
 // Return all ServiceEntries for a host, as an MCP resource.
-func convertServiceEntriesToResource(hostname string, sh map[string][]*v1alpha3.ServiceEntry) (*v1alpha1.Resource, error ){
+func convertServiceEntriesToResource(hostname string, sh map[string][]*v1alpha3.ServiceEntry) (*v1alpha1.Resource, error) {
 	// See serviceregistry/external/conversion for the opposite side
 	// See galley/pkg/runtime/state
 	hostParts := strings.Split(hostname, ".")
@@ -115,7 +112,7 @@ func convertServiceEntriesToResource(hostname string, sh map[string][]*v1alpha3.
 
 	for _, serviceEntriesShard := range sh {
 		for _, se := range serviceEntriesShard {
-				se.Endpoints = append(se.Endpoints, se.Endpoints...)
+			se.Endpoints = append(se.Endpoints, se.Endpoints...)
 		}
 	}
 
@@ -125,7 +122,7 @@ func convertServiceEntriesToResource(hostname string, sh map[string][]*v1alpha3.
 	}
 	res := v1alpha1.Resource{
 		Body: seAny,
-		Metadata:&v1alpha1.Metadata{
+		Metadata: &v1alpha1.Metadata{
 			Annotations: map[string]string{
 				"virtual": "1",
 			},
@@ -139,13 +136,11 @@ func convertServiceEntriesToResource(hostname string, sh map[string][]*v1alpha3.
 	return &res, nil
 }
 
-
 // Called on pod events.
 func (fx *AdsService) WorkloadUpdate(id string, labels map[string]string, annotations map[string]string) {
 	// update-Running seems to be readiness check ?
 	log.Println("PodUpdate ", id, labels, annotations)
 }
-
 
 func (*AdsService) ConfigUpdate(bool) {
 	//log.Println("ConfigUpdate")

@@ -15,8 +15,8 @@
 package model
 
 import (
-	rbacproto "istio.io/api/rbac/v1alpha1"
 	istiolog "github.com/costinm/istio-discovery/pkg/log"
+	rbacproto "istio.io/api/rbac/v1alpha1"
 )
 
 const (

@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/costinm/istio-discovery/pkg/log"
 	"github.com/gogo/protobuf/types"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/costinm/istio-discovery/pkg/log"
 )
 
 var (

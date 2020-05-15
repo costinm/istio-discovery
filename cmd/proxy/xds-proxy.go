@@ -10,23 +10,25 @@ import (
 )
 
 var (
-	server = flag.String("consul", "127.0.0.1:8500", "Address of consul agent")
+	server = flag.String("up", "127.0.0.1:8500", "Address of upstream XDS server")
 
-	grpcAddr = flag.String("grpcAddr", ":15098", "Address of the ADS/MCP server")
+	grpcAddr = flag.String("grpcAddr", ":15098", "Address of the local ADS/MCP server")
 
 	addr = flag.String("httpAddr", ":15099", "Address of the HTTP debug server")
+
+	dir = flag.String("static", ".", "Location of local files, merged with the upstream server")
 )
 
-// Minimal MCP server exposing k8s and consul synthetic entries
-// Currently both are returned to test the timing of the k8s-to-consul sync
+// Minimal MCP/ADS proxy
 // Will use KUBECONFIG or in-cluster config for k8s
 func main() {
 	flag.Parse()
 
 	a := service.NewService(*grpcAddr)
 
+	// TODO: multiple ADS clients
+
 	log.Println("Starting", a)
 
 	http.ListenAndServe(*addr, nil)
 }
-

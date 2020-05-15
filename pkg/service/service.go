@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"istio.io/api/mcp/v1alpha1"
-	mcp "istio.io/api/mcp/v1alpha1"
 )
 
 // Main implementation of the XDS, MCP and SDS services, using a common internal structures and model.
@@ -87,7 +86,9 @@ type Connection struct {
 	// Only one can be set.
 	Stream Stream
 
-	active bool
+	active     bool
+	resChannel chan proto.Message
+	errChannel chan error
 }
 
 // NewService initialized the grpc services. Non-blocking, returns error if it can't listen on the address.
@@ -99,8 +100,6 @@ func NewService(addr string) *AdsService {
 	adss.initGrpcServer()
 
 	ads.RegisterAggregatedDiscoveryServiceServer(adss.grpcServer, adss)
-	mcp.RegisterResourceSourceServer(adss.grpcServer, adss)
-	ads.RegisterSecretDiscoveryServiceServer(adss.grpcServer, adss)
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -130,18 +129,15 @@ type Stream interface {
 	Process(s *AdsService, con *Connection, message proto.Message) error
 }
 
-
 func AddHandler(typ string, handler TypeHandler) {
 	log.Println("HANDLER: ", typ)
 	resourceHandler[typ] = handler
 }
 
-
-
 // Process one 'stream' - can be XDS, MCP, SDS
 func (s *AdsService) stream(stream Stream) error {
 
-		peerInfo, ok := peer.FromContext(stream.Context())
+	peerInfo, ok := peer.FromContext(stream.Context())
 	peerAddr := "0.0.0.0"
 	if ok {
 		peerAddr = peerInfo.Addr.String()
@@ -158,6 +154,8 @@ func (s *AdsService) stream(stream Stream) error {
 		Watched:     map[string][]string{},
 		NonceAcked:  map[string]string{},
 		doneChannel: make(chan int, 2),
+		resChannel:  make(chan proto.Message, 2),
+		errChannel:  make(chan error, 2),
 	}
 	// Unlike pilot, this uses the more direct 'main thread handles read' mode.
 	// It also means we don't need 2 goroutines per connection.
@@ -168,26 +166,45 @@ func (s *AdsService) stream(stream Stream) error {
 		if firstReq {
 			return // didn't get first req, not added
 		}
+		close(con.resChannel)
+		close(con.doneChannel)
 		s.mutex.Lock()
 		delete(s.clients, con.ConID)
 		s.mutex.Unlock()
 
 	}()
 
-	for {
-		// Blocking. Separate go-routines may use the stream to push.
-		req, err := stream.Recv()
-		if err != nil {
-			if status.Code(err) == codes.Canceled || err == io.EOF {
-				log.Printf("ADS: %q %s terminated %v", con.PeerAddr, con.ConID, err)
-				return nil
+	go func() {
+		for {
+			// Blocking. Separate go-routines may use the stream to push.
+			req, err := stream.Recv()
+			if err != nil {
+				if status.Code(err) == codes.Canceled || err == io.EOF {
+					log.Printf("ADS: %q %s terminated %v", con.PeerAddr, con.ConID, err)
+					con.errChannel <- nil
+					return
+				}
+				log.Printf("ADS: %q %s terminated with errors %v", con.PeerAddr, con.ConID, err)
+				con.errChannel <- err
+				return
 			}
-			log.Printf("ADS: %q %s terminated with errors %v", con.PeerAddr, con.ConID, err)
-			return err
+			err = stream.Process(s, con, req)
+			if err != nil {
+				con.errChannel <- err
+				return
+			}
 		}
-		err = stream.Process(s, con, req)
-		if err != nil {
-			return err
+	}()
+
+	for {
+		select {
+		case res, _ := <-con.resChannel:
+			err := stream.Send(res)
+			if err != nil {
+				return err
+			}
+		case err1, _ := <-con.errChannel:
+			return err1
 		}
 	}
 
@@ -209,23 +226,19 @@ func (s *AdsService) push(con *Connection, rtype string, res []string) error {
 	return h(s, con, rtype, res)
 }
 
-
-
 func (fx *AdsService) SendAll(r *v1alpha1.Resources) {
-	for _, con:= range fx.clients {
+	for _, con := range fx.clients {
 		// TODO: only if watching our resource type
 
 		r.Nonce = fmt.Sprintf("%v", time.Now())
-		con.NonceSent[r.Collection] = r.Nonce;
+		con.NonceSent[r.Collection] = r.Nonce
 		con.Stream.Send(r)
 	}
 
 }
 
-
 func (fx *AdsService) Send(con *Connection, rtype string, r *v1alpha1.Resources) error {
 	r.Nonce = fmt.Sprintf("%v", time.Now())
-	con.NonceSent[rtype] = r.Nonce;
+	con.NonceSent[rtype] = r.Nonce
 	return con.Stream.Send(r)
 }
-

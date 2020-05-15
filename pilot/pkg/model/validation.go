@@ -766,7 +766,7 @@ func ValidateSidecar(name, namespace string, msg proto.Message) (errs error) {
 func validateSidecarPortBindAndCaptureMode(port *networking.Port, bind string,
 	captureMode networking.CaptureMode) (errs error) {
 
-	// Handle Unix domain sockets
+	// AddHandler Unix domain sockets
 	if port.Number == 0 {
 		// require bind to be a unix domain socket
 		errs = appendErrors(errs,

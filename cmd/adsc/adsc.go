@@ -31,7 +31,6 @@ import (
 )
 
 var (
-
 	pilotAddr = flag.String("pilot",
 		"localhost:15010",
 		"Pilot address. Can be a real pilot exposed for mesh expansion.")
@@ -98,9 +97,9 @@ func initMetrics() {
 // runClient creates a single long lived connection
 func runClient(n int) {
 	cfg := &adsc.AdsConfig{
-		IP: net.IPv4(10, 10, byte(n/256), byte(n%256)).String(),
+		IP:        net.IPv4(10, 10, byte(n/256), byte(n%256)).String(),
 		Namespace: *namespace,
-		Meta: map[string]string {
+		Meta: map[string]string{
 			"INTERCEPTION_MODE": "NONE",
 		},
 	}
@@ -140,9 +139,9 @@ func runClient(n int) {
 		if msg == "close" {
 			//err = c.Reconnect()
 			//if err != nil {
-				log.Println("Failed to reconnect")
-				return
-//			}
+			log.Println("Failed to reconnect")
+			return
+			//			}
 		}
 		if !initialConnect && msg == "rds" {
 			// This is a delayed initial connect

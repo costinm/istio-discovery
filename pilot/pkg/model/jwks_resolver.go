@@ -27,8 +27,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	authn "istio.io/api/authentication/v1alpha1"
 	"github.com/costinm/istio-discovery/pkg/cache"
+	authn "istio.io/api/authentication/v1alpha1"
 )
 
 const (

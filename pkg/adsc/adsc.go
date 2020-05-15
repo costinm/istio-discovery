@@ -27,7 +27,6 @@ import (
 	"sync"
 	"time"
 
-	mcp "istio.io/api/mcp/v1alpha1"
 	xdsapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	"github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	ads "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
@@ -36,6 +35,7 @@ import (
 	types "github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	mcp "istio.io/api/mcp/v1alpha1"
 )
 
 // AdsConfig for the ADS connection - information and metadata about the client.

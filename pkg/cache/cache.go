@@ -21,7 +21,7 @@ import (
 	"time"
 )
 
-// Stats returns usage statistics about an individual cache, useful to assess the
+// Stream returns usage statistics about an individual cache, useful to assess the
 // efficiency of a cache.
 //
 // The values returned in this struct are approximations of the current state of the cache.
@@ -86,7 +86,7 @@ type Cache interface {
 	// RemoveAll synchronously deletes all entries from the cache.
 	RemoveAll()
 
-	// Stats returns information about the efficiency of the cache.
+	// Stream returns information about the efficiency of the cache.
 	Stats() Stats
 }
 

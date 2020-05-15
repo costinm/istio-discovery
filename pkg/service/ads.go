@@ -3,14 +3,16 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/prometheus/client_golang/prometheus"
-	ads "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
 	"github.com/envoyproxy/go-control-plane/envoy/api/v2"
+	ads "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
 	"github.com/gogo/protobuf/proto"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"log"
 )
+
+// XDS v2 implementation of the common Stream interface.
 
 // IncrementalAggregatedResources is not implemented.
 func (s *AdsService) DeltaAggregatedResources(stream ads.AggregatedDiscoveryService_DeltaAggregatedResourcesServer) error {
@@ -22,22 +24,19 @@ func (s *AdsService) StreamAggregatedResources(stream ads.AggregatedDiscoverySer
 	return s.stream(&adsStream{stream: stream})
 }
 
-
 type adsStream struct {
 	stream ads.AggregatedDiscoveryService_StreamAggregatedResourcesServer
 }
 
-func (mcps *adsStream) Send(p proto.Message) error {
+func (adss *adsStream) Send(p proto.Message) error {
 	if mp, ok := p.(*v2.DiscoveryResponse); ok {
-		return mcps.stream.Send(mp)
+		return adss.stream.Send(mp)
 	}
 	return errors.New("Invalid stream")
 }
 
-
-func (mcps *adsStream) Recv() (proto.Message, error) {
-	p, err := mcps.stream.Recv()
-
+func (adss *adsStream) Recv() (proto.Message, error) {
+	p, err := adss.stream.Recv()
 	if err != nil {
 		return nil, err
 	}
@@ -45,11 +44,11 @@ func (mcps *adsStream) Recv() (proto.Message, error) {
 	return p, err
 }
 
-func (mcps *adsStream) Context() context.Context {
-	return context.Background()
+func (adss *adsStream) Context() context.Context {
+	return adss.stream.Context()
 }
 
-func (mcps *adsStream) Process(s *AdsService, con *Connection, msg proto.Message) error {
+func (adss *adsStream) Process(s *AdsService, con *Connection, msg proto.Message) error {
 	req := msg.(*v2.DiscoveryRequest)
 	if !con.active {
 		if req.Node == nil || req.Node.Id == "" {
@@ -117,4 +116,3 @@ func (mcps *adsStream) Process(s *AdsService, con *Connection, msg proto.Message
 
 	return err
 }
-

@@ -6,12 +6,16 @@ import (
 	"github.com/costinm/istio-discovery/pilot/pkg/model"
 )
 
+// Read all resources. If any changes (updates, new files - delete is an update), will generate pushes.
+// TODO: The resources can be merged on existing resources (patches/kustomization) !
+func LoadDir(dir string) {
+
+}
+
 // FakeXdsUpdater is used to test the registry.
 type FakeXdsUpdater struct {
 	// Events tracks notifications received by the updater
 	Events chan XdsEvent
-
-
 }
 
 // XdsEvent is used to watch XdsEvents
@@ -33,7 +37,6 @@ func NewFakeXDS() *FakeXdsUpdater {
 func (*FakeXdsUpdater) ConfigUpdate(bool) {
 
 }
-
 
 func (fx *FakeXdsUpdater) EDSUpdate(shard, hostname string, entry []*model.IstioEndpoint) error {
 	select {
@@ -90,4 +93,3 @@ func (fx *FakeXdsUpdater) Clear() {
 		}
 	}
 }
-

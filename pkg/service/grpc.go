@@ -2,16 +2,15 @@ package service
 
 import (
 	"github.com/costinm/istio-discovery/pkg/features/pilot"
-	"google.golang.org/grpc"
-	"strconv"
 	middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcprometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"google.golang.org/grpc"
+	"strconv"
 )
 
 func (s *AdsService) initGrpcServer() {
 	grpcOptions := s.grpcServerOptions()
 	s.grpcServer = grpc.NewServer(grpcOptions...)
-
 }
 
 func (s *AdsService) grpcServerOptions() []grpc.ServerOption {
@@ -40,5 +39,3 @@ func (s *AdsService) grpcServerOptions() []grpc.ServerOption {
 
 	return grpcOptions
 }
-
-
